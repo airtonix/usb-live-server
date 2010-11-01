@@ -1,0 +1,51 @@
+dn: cn=student,ou=Group,dc=ubuntu,dc=local
+cn: student
+member: uid=z.jiricek,ou=People,dc=ubuntu, dc=local
+member: uid=j.doe,ou=People,dc=ubuntu, dc=local
+member: uid=m.jane,ou=People,dc=ubuntu, dc=local
+objectclass: groupOfNames
+objectclass: top
+
+
+dn: cn=cert2,ou=Group,dc=ubuntu,dc=local
+cn: cert2
+member: uid=j.doe,ou=People,dc=ubuntu, dc=local
+objectclass: groupOfNames
+objectclass: top
+
+dn: cn=cert3,ou=Group,dc=ubuntu,dc=local
+cn: cert3
+member: uid=m.jane,ou=People,dc=ubuntu, dc=local
+objectclass: groupOfNames
+objectclass: top
+
+dn: cn=cert4,ou=Group,dc=ubuntu,dc=local
+cn: cert4
+member: uid=z.jiricek,ou=People,dc=ubuntu, dc=local
+objectclass: groupOfNames
+objectclass: top
+
+dn: cn=staff,ou=Group,dc=ubuntu,dc=local
+cn: staff
+member: uid=n.valance,ou=People,dc=ubuntu, dc=local
+member: uid=m.paxton,ou=People,dc=ubuntu, dc=local
+member: uid=m.mehran,ou=People,dc=ubuntu, dc=local
+member: uid=g.becis,ou=People,dc=ubuntu, dc=local
+objectclass: groupOfNames
+objectclass: top
+
+dn: cn=teacher,ou=Group,dc=ubuntu,dc=local
+cn: teacher
+member: uid=n.valance,ou=People,dc=ubuntu, dc=local
+member: uid=m.paxton,ou=People,dc=ubuntu, dc=local
+member: uid=m.mehran,ou=People,dc=ubuntu, dc=local
+member: uid=g.becis,ou=People,dc=ubuntu, dc=local
+objectclass: groupOfNames
+objectclass: top
+
+dn: cn=support,ou=Group,dc=ubuntu,dc=local
+cn: support
+member: uid=n.valance,ou=People,dc=ubuntu, dc=local
+objectclass: groupOfNames
+objectclass: top
+

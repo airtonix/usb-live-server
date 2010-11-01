@@ -1,0 +1,13 @@
+[server]
+name=support.staff
+
+[webmaster]
+email = z.jiricek@ubuntu.local
+
+[features]
+django=True
+apache_ldap=True
+
+[groups]
+allow = "ou=People,dc=ubuntu,dc=local"
+

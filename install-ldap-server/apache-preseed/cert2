@@ -1,0 +1,12 @@
+[server]
+name = cert2.students
+
+[webmaster]
+email = z.jiricek@ubuntu.local
+
+[features]
+apache_ldap=True
+
+[groups]
+allow = "cn=cert2,ou=Group,dc=ubuntu,dc=local; cn=teacher,ou=Group,dc=ubuntu,dc=local"
+

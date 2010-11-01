@@ -1,0 +1,13 @@
+[server]
+name = teachers.staff
+
+[webmaster]
+email = z.jiricek@ubuntu.local
+
+[features]
+django=True
+apache_ldap=True
+
+[groups]
+allow = "cn=teacher,ou=Group,dc=ubuntu,dc=local"
+

@@ -1,0 +1,12 @@
+[server]
+name=students
+
+[webmaster]
+email = z.jiricek@ubuntu.local
+
+[features]
+apache_ldap=True
+
+[groups]
+allow="cn=student,ou=Group,dc=ubuntu,dc=local"
+

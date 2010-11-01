@@ -1,0 +1,239 @@
+dn: ou=People,dc=ubuntu, dc=local
+ou: People
+objectClass: organizationalUnit
+
+dn: ou=Group,dc=ubuntu, dc=local
+ou: Group
+objectClass: organizationalUnit
+description: Container for user accounts
+
+dn: ou=System Accounts,dc=ubuntu, dc=local
+ou: System Accounts
+objectClass: organizationalUnit
+description: Container for System and Services privileged accounts
+
+dn: ou=System Groups,dc=ubuntu, dc=local
+ou: System Groups
+objectClass: organizationalUnit
+description: Container for System and Services privileged groups
+
+dn: ou=Hosts,dc=ubuntu, dc=local
+ou: Hosts
+objectClass: organizationalUnit
+description: Container for Samba machine accounts
+
+dn: ou=Idmap,dc=ubuntu, dc=local
+ou: Idmap
+objectClass: organizationalUnit
+description: Container for Samba Winbind ID mappings
+
+dn: ou=Address Book,dc=ubuntu, dc=local
+ou: Address Book
+objectClass: organizationalUnit
+description: Container for global address book entries
+
+dn: ou=sudoers,dc=ubuntu, dc=local
+ou: sudoers
+objectClass: organizationalUnit
+description: Container for sudo related entries
+
+dn: cn=defaults,ou=sudoers,dc=ubuntu, dc=local
+cn: defaults
+objectClass: sudoRole
+sudoOption: authenticate
+description: Default options for sudo roles
+
+dn: ou=dhcp,dc=ubuntu, dc=local
+ou: dhcp
+objectClass: organizationalUnit
+description: Container for DHCP related entries
+
+dn: ou=dns,dc=ubuntu, dc=local
+ou: dns
+objectClass: organizationalUnit
+description: Container for DNS related entries
+
+dn: ou=Password Policies,dc=ubuntu, dc=local
+ou: Password Policies
+objectClass: organizationalUnit
+description: Container for OpenLDAP password policies
+
+
+
+# System Accounts
+dn: uid=Account Admin,ou=System Accounts,dc=ubuntu, dc=local
+uid: Account Admin
+objectClass: account
+objectClass: simpleSecurityObject
+userPassword: password
+description: Account used to administer all users, groups, machines and general accounts
+
+dn: uid=nssldap,ou=System Accounts,dc=ubuntu, dc=local
+uid: nssldap
+objectClass: account
+objectClass: simpleSecurityObject
+userPassword: password
+description: Unprivileged account which can be used by nss_ldap for when anonymous searches are disabled
+
+dn: uid=MTA Admin,ou=System Accounts,dc=ubuntu, dc=local
+uid: MTA Admin
+objectClass: account
+objectClass: simpleSecurityObject
+userPassword: password
+description: Account used to administer email related attributes
+
+dn: uid=DHCP Admin,ou=System Accounts,dc=ubuntu, dc=local
+uid: DHCP Admin
+objectClass: account
+objectClass: simpleSecurityObject
+userPassword: password
+description: Account used to administer DHCP related entries and attributes
+
+dn: uid=DHCP Reader,ou=System Accounts,dc=ubuntu, dc=local
+uid: DHCP Reader
+objectClass: account
+objectClass: simpleSecurityObject
+userPassword: password
+description: Account used to read entries and attributes under ou=dhcp
+
+dn: uid=DNS Admin,ou=System Accounts,dc=ubuntu, dc=local
+uid: DNS Admin
+objectClass: account
+objectClass: simpleSecurityObject
+userPassword: password
+description: Account used to administer DNS related entries and attributes
+
+dn: uid=DNS Reader,ou=System Accounts,dc=ubuntu, dc=local
+uid: DNS Reader
+objectClass: account
+objectClass: simpleSecurityObject
+userPassword: password
+description: Account used to read entries and attributes under ou=dns
+
+dn: uid=Sudo Admin,ou=System Accounts,dc=ubuntu, dc=local
+uid: Sudo Admin
+objectClass: account
+objectClass: simpleSecurityObject
+userPassword: password
+description: Account used to administer Sudo related entries and attributes
+
+dn: uid=Address Book Admin,ou=System Accounts,dc=ubuntu, dc=local
+uid: Address Book Admin
+objectClass: account
+objectClass: simpleSecurityObject
+userPassword: password
+description: Account used to administer global Address Book related entries and attributes
+
+dn: uid=LDAP Admin,ou=System Accounts,dc=ubuntu, dc=local
+uid: LDAP Admin
+objectClass: account
+objectClass: simpleSecurityObject
+userPassword: password
+description: Account used to administer all parts of the Directory
+
+dn: uid=LDAP Replicator,ou=System Accounts,dc=ubuntu, dc=local
+uid: LDAP Replicator
+objectClass: account
+objectClass: simpleSecurityObject
+userPassword: password
+description: Account used by consumer servers for replication
+
+dn: uid=LDAP Monitor,ou=System Accounts,dc=ubuntu, dc=local
+uid: LDAP Monitor
+objectClass: account
+objectClass: simpleSecurityObject
+userPassword: password
+description: Account used to read cn=monitor entries
+
+dn: uid=Idmap Admin,ou=System Accounts,dc=ubuntu, dc=local
+uid: Idmap Admin
+objectClass: account
+objectClass: simpleSecurityObject
+userPassword: password
+description: Account used to administer Samba Winbind ID mapping related entries and attributes
+
+# Groups associated with system accounts
+dn: cn=LDAP Admins,ou=System Groups,dc=ubuntu, dc=local
+cn: LDAP Admins
+objectClass: groupOfNames
+description: Members can administer all parts of the Directory
+owner: uid=LDAP Admin,ou=System Accounts,dc=ubuntu, dc=local
+member: uid=LDAP Admin,ou=System Accounts,dc=ubuntu, dc=local
+
+dn: cn=Account Admins,ou=System Groups,dc=ubuntu, dc=local
+cn: Account Admins
+objectClass: groupOfNames
+description: Members can administer all user, group and machine accounts
+owner: uid=Account Admin,ou=System Accounts,dc=ubuntu, dc=local
+member: uid=Account Admin,ou=System Accounts,dc=ubuntu, dc=local
+
+dn: cn=Sudo Admins,ou=System Groups,dc=ubuntu, dc=local
+cn: Sudo Admins
+objectClass: groupOfNames
+description: Members can administer ou=sudoers entries and attributes
+owner: uid=Sudo Admin,ou=System Accounts,dc=ubuntu, dc=local
+member: uid=Sudo Admin,ou=System Accounts,dc=ubuntu, dc=local
+
+dn: cn=DNS Admins,ou=System Groups,dc=ubuntu, dc=local
+cn: DNS Admins
+objectClass: groupOfNames
+description: Members can administer ou=DNS entries and attributes
+owner: uid=DNS Admin,ou=System Accounts,dc=ubuntu, dc=local
+member: uid=DNS Admin,ou=System Accounts,dc=ubuntu, dc=local
+
+dn: cn=DNS Readers,ou=System Groups,dc=ubuntu, dc=local
+cn: DNS Readers
+objectClass: groupOfNames
+description: Members can read entries and attributes under ou=dns
+owner: uid=DNS Admin,ou=System Accounts,dc=ubuntu, dc=local
+member: uid=DNS Reader,ou=System Accounts,dc=ubuntu, dc=local
+
+dn: cn=DHCP Admins,ou=System Groups,dc=ubuntu, dc=local
+cn: DHCP Admins
+objectClass: groupOfNames
+description: Members can administer ou=DHCP entries and attributes
+owner: uid=DHCP Admin,ou=System Accounts,dc=ubuntu, dc=local
+member: uid=DHCP Admin,ou=System Accounts,dc=ubuntu, dc=local
+
+dn: cn=DHCP Readers,ou=System Groups,dc=ubuntu, dc=local
+cn: DHCP Readers
+objectClass: groupOfNames
+description: Members can read entries and attributes under ou=dhcp
+owner: uid=DHCP Admin,ou=System Accounts,dc=ubuntu, dc=local
+member: uid=DHCP Reader,ou=System Accounts,dc=ubuntu, dc=local
+
+dn: cn=Address Book Admins,ou=System Groups,dc=ubuntu, dc=local
+cn: Address Book Admins
+objectClass: groupOfNames
+description: Members can administer ou=Address Book entries and attributes
+owner: uid=Address Book Admin,ou=System Accounts,dc=ubuntu, dc=local
+member: uid=Address Book Admin,ou=System Accounts,dc=ubuntu, dc=local
+
+dn: cn=LDAP Replicators,ou=System Groups,dc=ubuntu, dc=local
+cn: LDAP Replicators
+objectClass: groupOfNames
+description: Members can be used for syncrepl replication
+owner: uid=LDAP Replicator,ou=System Accounts,dc=ubuntu, dc=local
+member: uid=LDAP Replicator,ou=System Accounts,dc=ubuntu, dc=local
+
+dn: cn=MTA Admins,ou=System Groups,dc=ubuntu, dc=local
+cn: MTA Admins
+objectClass: groupOfNames
+description: Members can administer email related attributes
+owner: uid=MTA Admin,ou=System Accounts,dc=ubuntu, dc=local
+member: uid=MTA Admin,ou=System Accounts,dc=ubuntu, dc=local
+
+dn: cn=LDAP Monitors,ou=System Groups,dc=ubuntu, dc=local
+cn: LDAP Monitors
+objectClass: groupOfNames
+description: Members can read the cn=monitor backend
+owner: uid=LDAP Monitor,ou=System Accounts,dc=ubuntu, dc=local
+member: uid=LDAP Monitor,ou=System Accounts,dc=ubuntu, dc=local
+
+dn: cn=Idmap Admins,ou=System Groups,dc=ubuntu, dc=local
+cn: Idmap Admins
+objectClass: groupOfNames
+description: Members can administer ou=Idmap entries and attributes
+owner: uid=Idmap Admin,ou=System Accounts,dc=ubuntu, dc=local
+member: uid=Idmap Admin,ou=System Accounts,dc=ubuntu, dc=local
+

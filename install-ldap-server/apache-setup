@@ -1,0 +1,154 @@
+#!/usr/bin/env python
+from optparse import OptionParser
+import sys, subprocess, re, os
+import ConfigParser
+import string
+
+from lib.console_colours import message
+
+scriptpath = os.path.dirname(__file__)
+APACHE_PRESEED_PATH = "%s/apache-preseed" % scriptpath
+
+
+#########################
+# AUX FUNCTIONS
+def debug (*str):
+	print( "".join(str) )
+
+def template (str):
+	""" Function doc """
+	if re.search('\$\{([a-zA-Z_]+)\}', str)!=None :
+		tmpTemplate = string.Template(str)
+		output = tmpTemplate.substitute(globals())
+		return output
+	else :
+		return str
+
+def process_file(file):
+	debug( message(" + %s" % file, "header") )
+	config = ConfigParser.RawConfigParser()
+	config.read(file)
+	cmd = "sudo apache-create-vhost %s"
+	sections = config.sections()
+	args = []
+
+
+	for item in sections :
+		items = config.items(item)
+		debug(
+			"   : ",
+			message("[ %s ]" % len(items),'result'),
+			message("%s" % item, "header"),
+		)
+		if ("server") in item  :
+			args.append( setup_server( items ) )
+
+		if ("features") in item :
+			args.append( setup_features( items ) )
+
+		if ("webmaster") in item :
+			args.append( setup_webmaster( items ) )
+
+		if ("groups") in item :
+			args.append( setup_groups( items ) )
+
+		if ("users") in item :
+			args.append( setup_users( items ) )
+
+	args = " ".join(args)
+
+	debug(
+		"   $ ",
+		message(
+			" using : %s" % (cmd % args),
+			"debug"
+		)
+	)
+
+	return cmd % args
+
+#########################
+# SETUP FUNCTIONS
+def setup_server(items=None):
+	output = []
+	for row in items :
+		key = row[0]
+		value = row[1]
+		if "name" in key :
+			output.append("--name=%s" % value )
+
+	return " ".join(output)
+
+def setup_webmaster(items=None):
+	output = []
+	for row in items :
+		key = row[0]
+		value = row[1]
+		if "email" in key :
+			output.append("--email=%s" % value )
+
+	return " ".join(output)
+
+def setup_features(items=None):
+	output = []
+	for row in items :
+		key = row[0]
+		value = row[1]
+		if "django" in key :
+			output.append("--django")
+		if "apache_ldap" in key :
+			output.append("--ldap")
+
+	return " ".join(output)
+
+def setup_groups(items=None):
+	output = []
+	for row in items :
+		key = row[0]
+		value = row[1]
+		if "allow" in key :
+			output.append("--ldap-allow-groups=%s" % value )
+		if "deny" in key :
+			output.append("--ldap-deny-groups=%s" % value )
+
+	return " ".join(output)
+
+def setup_users(items=None):
+	output = []
+	for row in items :
+		key = row[0]
+		value = row[1]
+		if "allow" in key :
+			output.append("--ldap-allow-users=%s" % value )
+		if "deny" in key :
+			output.append("--ldap-deny-users=%s" % value )
+
+	return " ".join(output)
+
+
+#########################
+# START
+def run(options):
+	debug( message(template("listing files in : ${APACHE_PRESEED_PATH}"), "debug") )
+	for file in os.listdir(APACHE_PRESEED_PATH) :
+		path = os.path.join(os.path.abspath(APACHE_PRESEED_PATH), file)
+		cmd = process_file( path )
+
+		if options.testrun :
+			cmd ="%s%s" % (cmd, " --test-run")
+
+		os.system(cmd)
+
+
+if __name__ == "__main__":
+	parser = OptionParser()
+
+	parser.add_option("-T", "--test-run",
+		dest="testrun",
+		action="store_true",
+		default=False,
+		help="Dry Test Run, no actions taken.")
+
+	(options,args) = parser.parse_args()
+	run(options)
+

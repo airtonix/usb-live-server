@@ -1,0 +1,31 @@
+dn: uid=m.jane,ou=People,dc=ubuntu,dc=local
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: m.jane
+sn: Jane
+givenName: Mary
+cn: Mary Jane
+displayName: Mary Jane
+uidNumber: 1001
+gidNumber: 10000
+userPassword: password
+gecos: Mary Jane
+loginShell: /bin/bash
+homeDirectory: /home/mjane
+shadowExpire: -1
+shadowFlag: 0
+shadowWarning: 7
+shadowMin: 8
+shadowMax: 999999
+shadowLastChange: 10877
+mail: mary.jane@ubuntu.local
+postalCode: 5000
+l: Adelaide
+o: Thebarton Senior College
+mobile: +33 (0)6 xx xx xx xx
+homePhone: +33 (0)5 xx xx xx xx
+title: Student
+postalAddress: na
+initials: MJ
+

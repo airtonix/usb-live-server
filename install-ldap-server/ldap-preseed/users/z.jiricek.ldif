@@ -1,0 +1,31 @@
+dn: uid=z.jiricek,ou=People,dc=ubuntu,dc=local
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: z.jiricek
+sn: Jiricek
+givenName: Zeno
+cn: Zenobius Jiricek
+displayName: Zenobius Jiricek
+uidNumber: 1003
+gidNumber: 10000
+userPassword: password
+gecos: Zenobius Jiricek
+loginShell: /bin/bash
+homeDirectory: /home/zjiricek
+shadowExpire: -1
+shadowFlag: 0
+shadowWarning: 7
+shadowMin: 8
+shadowMax: 999999
+shadowLastChange: 10877
+mail: zenobius.jiricek@ubuntu.local
+postalCode: 5000
+l: Adelaide
+o: Thebarton Senior College
+mobile: +33 (0)6 xx xx xx xx
+homePhone: +33 (0)5 xx xx xx xx
+title: System Administrator
+postalAddress: na
+initials: ZJ
+

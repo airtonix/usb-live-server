@@ -1,0 +1,460 @@
+#!/usr/bin/env python
+import sys, subprocess, re, os, pwd, getpass
+
+from optparse import OptionParser
+import string
+
+def message(message, level=None):
+	START='\033['
+	FINISH='\033[0m'
+
+	BOLD='1;'
+
+	BLACK="30"
+	RED="31"
+	GREEB="32"
+	YELLOW="33"
+	BLUE="34"
+	MAGENTA="35"
+	CYAN="36"
+	GREY="37"
+
+	BGBLACK="40"
+	BGRED="41"
+	BGGREEB="42"
+	BGYELLOW="43"
+	BGBLUE="44"
+	BGMAGENTA="45"
+	BGCYAN="46"
+	BGGREY="47"
+
+	if level == "header" :
+		COLOURS="%s;%sm" % (GREY, BGBLUE)
+	if level == "error" :
+		COLOURS="%s;%sm" % (GREY, BGRED)
+	elif level == "warning" :
+		COLOURS="%s;%sm" % (BLACK,BGYELLOW)
+	elif level == "debug" :
+		COLOURS="%sm" % YELLOW
+	elif level == "result" :
+		COLOURS="%sm" % CYAN
+	elif level == "success" :
+		COLOURS="%sm" % GREEN
+	elif level == "choice" :
+		COLOURS="%sm" % BLUE
+	else :
+		COLOURS="%sm" % GREY
+
+	return "%s%s %s %s" % (START, COLOURS, message, FINISH)
+
+
+"""
+		------------
+		--- TODO ---
+		------------
+	COMPONENTS MANIFEST ACTIONS
+	---------------------------
+		if if an action-section fails, then the component will not be processed.
+	ComponentName
+	 | - >	1. action section name	: name of the action group
+		2. actions		: actions to perform (actions with <> are references to functions here.
+			| - > action command [parameter(s)] : action parameters (command is run for each parameter)
+				(each action can also have a third conditional argument to determine if it should execute.
+		3. condition		:  if this equals False, then this action group is skipped.
+
+"""
+COMPONENTS = {
+	"base" : [
+		["Export Variables",[
+			["<STORE>" 									, ["SITE_PATH_ROOT", "/var/www/${SUBDOMAIN_NAME}/"]],
+		]]
+	],
+	"django" : [
+		["Create the Apache Python CGI", [
+			["<STORE>"									, ["DJANGO_WSCGI", """import os, sys\nsys.path.insert(0,'/var/www/${SUBDOMAIN_NAME}') \nos.environ['DJANGO_SETTINGS_MODULE'] = 'project.settings' \nimport django.core.handlers.wsgi \napplication = django.core.handlers.wsgi.WSGIHandler()"""]],
+		]],
+
+		["Create the apache Config Element",[
+			["<STORE>"	, ["DJANGO_CONFIG","""
+WSGIScriptAlias / ${SITE_PATH_ROOT}cgi-bin/django.wsgi
+Alias /robots.txt ${SITE_PATH_ROOT}public_html/robots.txt
+Alias /favicon.ico ${SITE_PATH_ROOT}public_html/favicon.ico
+Alias /resources ${SITE_PATH_ROOT}public_html"""]]
+		]],
+	],
+
+	"apache" : [
+		["Create Directories",[
+			["avahi-add-alias"				, ["${SUBDOMAIN_NAME}.${AVAHI_HOSTNAME}"]],
+			["mkdir" 									, ["${SITE_PATH_ROOT}","-p"]],
+			["mkdir" 									, ["${SITE_PATH_ROOT}logs","-p"]],
+			["mkdir" 									, ["${SITE_PATH_ROOT}public_html","-p"]],
+		]],
+
+		["Setup Log Files", [
+			["touch" 									, ["${SITE_PATH_ROOT}logs/errors.log"]],
+			["touch" 									, ["${SITE_PATH_ROOT}logs/access.log"]],
+		]],
+
+		["Create the Django Paths & Files", [
+			["mkdir"										, ["${SITE_PATH_ROOT}db","-p"]],
+			["mkdir"										, ["${SITE_PATH_ROOT}cgi-bin","-p"]],
+			["mkdir"										, ["${SITE_PATH_ROOT}cgi-bin","-p"]],
+			["touch"										, ["${SITE_PATH_ROOT}cgi-bin/django"]],
+			["touch"										, ["${SITE_PATH_ROOT}logs/django.errors.log"]],
+			["touch"										, ["${SITE_PATH_ROOT}logs/django.debug.log"]],
+			["touch"										, ["${SITE_PATH_ROOT}logs/django.access.log"]],
+			["<FILEWRITE>"							, ["${DJANGO_WSCGI}", "${SITE_PATH_ROOT}cgi-bin/django.wsgi"]]
+		], "self.variables['isDjango'] == True"],
+		["Create the Sqlite Database", [
+			["touch"										, ["${SITE_PATH_ROOT}db/database.sql3"]],
+			["chmod"										, ["777","${SITE_PATH_ROOT}db/database.sql3"]],
+		], "self.variables['isDjango'] == True"],
+		["Create the Django project", [
+			["<DJANGOADMIN>"							, ["startproject", "project"], "${SITE_PATH_ROOT}"],
+			# TODO: workout how to write the settings.py file there.
+			#["<STORE>"									, [""" INSERT DJANGO SETTINGS.PY HERE """]],
+			# TODO: initial Sync
+			#["<DJANGOADMIN>"							, ["syncdb"], "${SITE_PATH_ROOT}"],
+			# TODO : Link system admin media to this virtual host.
+			#["ln"												, ['/usr/lib/pymodules/python2.6/django/contrib/admin/media/', '/var/www/${SUBDOMAIN_NAME}/public_html/admin']],
+			# TODO :start initial migration.
+			#["<DJANGOADMIN>"							, ["migrate"], "${SITE_PATH_ROOT}"]
+		], "self.variables['isDjango'] == True"],
+
+
+		["Apache Default Authentication", [
+			["<STORE>"								, ["APACHE_AUTHENTICATION_FRAGMENT","""
+<Directory /var/www/${SUBDOMAIN_NAME}/public_html/>
+ Options Indexes FollowSymLinks MultiViews
+ AllowOverride All
+ Order allow,deny
+ allow from all
+</Directory>"""]]
+		],"self.variables['isLdap']==False"],
+
+		["Apache-Ldap Directory Based Authentication", [
+			["<STORE>"								, ["APACHE_AUTHENTICATION_FRAGMENT", """
+<Directory /var/www/${SUBDOMAIN_NAME}/public_html/>
+ Options Indexes FollowSymLinks MultiViews
+ Order allow,deny
+ allow from all
+</Directory>
+<Location / >
+ AuthBasicProvider ldap
+ AuthLDAPURL "ldap://localhost:389/${LDAP_BASE}?uid"
+ AuthLDAPBindDN "cn=admin,dc=${HOSTNAME},dc=${AVAHI_DOMAIN}"
+ AuthLDAPBindPassword "${LDAP_ADMIN_PASSWORD}d"
+ AuthType basic
+ AuthName "Please provide valid crednetials for : ${SUBDOMAIN_NAME}.${HOSTNAME}.${AVAHI_DOMAIN}"
+ ${LDAP_REQUIRE_MODE}
+ # TODO: Require ldap-attribute active=true
+</Location>"""]]
+		],"self.variables['isLdap']==True"],
+
+		["Apache Vhost Definition File", [
+
+			["touch"									, ["/etc/apache2/sites-available/${SUBDOMAIN_NAME}"]],
+			["<STORE>"								, ["APACHE_VHOST_CONF", """
+<VirtualHost *:80>
+ ServerAdmin ${ADMIN_EMAIL}
+ ServerName ${SUBDOMAIN_NAME}.${AVAHI_HOSTNAME}
+ DocumentRoot /var/www/${SUBDOMAIN_NAME}/public_html
+ ${APACHE_AUTHENTICATION_FRAGMENT}
+ ${DJANGO_CONFIG}
+ LogFormat "'time'='%t', 'user'='%u', 'client-ip'='%a', 'server-ip'='%A', 'server-name'='%v', 'url'='%U', 'status'='%>s'" authentications
+ ErrorLog /var/www/${SUBDOMAIN_NAME}/logs/error.log
+ CustomLog /var/www/${SUBDOMAIN_NAME}/logs/access.log combined
+ CustomLog /var/www/${SUBDOMAIN_NAME}/logs/access.log authentications
+</VirtualHost>"""]],
+			["<FILEWRITE>"						, ["${APACHE_VHOST_CONF}", "/etc/apache2/sites-available/${SUBDOMAIN_NAME}"]],
+			["avahi-publish-aliases"	, ["${SUBDOMAIN_NAME}.${AVAHI_HOSTNAME}"]],
+			["a2ensite"								, ["${SUBDOMAIN_NAME}"]],
+			["service"								, ["avahi-daemon"," stop"]],
+			["service"								, ["avahi-daemon"," start"]],
+			["service"								, ["apache2","restart"]],
+			["avahi-publish-aliases"],
+
+		]],
+	],
+
+}
+
+class vhostCreator:
+	""" Class doc """
+
+	def __init__ (self, args):
+		""" Class initialiser """
+		self.required_components = ["base","apache"]
+		self.debug = True
+		self.testrun = args.isTestRun
+
+		self.variables = {}
+		self.variables["APPNAME"] = "Apache2 Virtual Host Creator"
+		self.variables["APP_HEADER"] = self.process_template("${APPNAME}\ncreates apache virtual host subdomains for current machine.\nUbuntu 9.10, 10.04")
+		self.variables["USERNAME"] = os.getenv("USER")
+		self.variables["HOSTNAME"] = self.popen_pipe("hostname").strip("\n")
+		self.variables["AVAHI_DOMAIN"] = "local"
+		self.variables["AVAHI_HOSTNAME"] = "%s.%s" % (self.variables["HOSTNAME"],self.variables["AVAHI_DOMAIN"])
+		self.variables["SUBDOMAIN_NAME"] = args.subdomain_name
+		self.variables["ADMIN_EMAIL"] = self.process_template(args.admin_email)
+
+		self.variables["SITE_PATH_ROOT"] = None
+
+		self.variables["isDjango"] = args.isDjango
+		self.variables["DJANGO_HANDLES_LDAP"] = args.djangoHandlesLDAP
+		self.variables["DJANGO_CONFIG"] = ""
+		self.variables["DJANGO_CGI"] = ""
+
+		self.variables["isLdap"] = args.isLdap
+		self.variables["LDAP_URL"] = self.process_template(args.ldap_url)
+		self.variables["LDAP_BASE"] = self.process_template(args.ldap_base)
+		self.variables["LDAP_ADMIN"] = self.process_template(args.ldap_admin)
+		self.variables["LDAP_ADMIN_PASSWORD"] = args.ldap_admin_password
+
+		self.variables["LDAP_ALLOW_GROUPS"] = self.process_template(args.ldap_allow_groups)
+		self.variables["LDAP_ALLOW_USERS"] = self.process_template(args.ldap_allow_users)
+
+		if args.isLdap:
+
+			if args.ldap_url != None and \
+				args.ldap_base != None and \
+				args.ldap_admin != None and \
+				args.ldap_admin_password != None :
+				self.logger("""Site will authenticate users with LDAP Server \n :: Server : %s \n :: Base_DN : %s \n :: Groups : %s \n :: Admin : %s \n :: Password : %s \n :: """ %(args.ldap_url, args.ldap_base, args.ldap_allow_groups, args.ldap_admin, args.ldap_admin_password) )
+			else :
+				raise BaseException, "Error : Using LDAP requires ldap server details."
+
+			if args.ldap_allow_groups :
+				groups = []
+				for group in self.process_template(args.ldap_allow_users).split(";") :
+					groups.append("Require ldap-group %s" % group)
+				self.variables["LDAP_REQIRE_MODE"] = "\n".join(groups)
+			elif args.ldap_allow_users :
+				users = []
+				for user in self.process_template(args.ldap_allow_users).split(";") :
+					groups.append("Require ldap-user %s" % user)
+				self.variables["LDAP_REQIRE_MODE"] = "\n".join(groups)
+			else :
+				self.variables["LDAP_REQIRE_MODE"] = "Require valid-user"
+		else:
+			self.variables["LDAP_REQIRE_MODE"]=""
+
+		print ( message(self.variables["APP_HEADER"],"header") )
+
+		if args.isDjango :
+			self.required_components.insert(1,"django")
+
+	def create (self):
+		""" Function doc """
+		for component in self.required_components :
+			self.logger( message("Processing Component : %s" % component, "header") )
+			COMPONENT = COMPONENTS[component]
+			for step in COMPONENT:
+
+				label = step[0]
+				actions = step[1]
+				condition = True
+
+				if len(step) > 2 :
+					condition = eval(step[2])
+
+				if not condition :
+					continue
+				else:
+					self.logger( message("\t>>> %s " % label, "warning") )
+
+				for command in actions :
+					arg_elms = []
+
+					try :
+						for elm in command[1] :
+							arg_elms.append( self.process_template( elm ) )
+					except:
+						pass
+
+					if command[0] == "<STORE>" :
+						self.logger( "Storing %s " % arg_elms[0] )
+						self.variables[ arg_elms[0] ] = arg_elms[1]
+
+					elif command[0] == "<FILEWRITE>" :
+						self.dump_to_file(arg_elms[1], arg_elms[0])
+
+					elif command[0] == "<DJANGOADMIN>" :
+						arg_elms.insert(0,"django-admin")
+						arg_elms.insert(0, "sudo")
+						self.popen(arg_elms, self.process_template( command[2] ) )
+
+					else :
+						self.execute("%s %s" % (command[0]," ".join(arg_elms) ) )
+	def remove(self):
+		pass
+
+	def logger (self,*msg):
+		""" Function doc """
+		if self.debug :
+
+			print( "%s%s" % (message("[ %s ]" % self.variables["APPNAME"])," ".join(msg) ) )
+
+	def process_template (self, str):
+		""" Function doc """
+
+		if re.search('\$\{([a-zA-Z0-9_]+)\}', str)!=None :
+			#print("processing : string")
+			return string.Template(str).safe_substitute(self.variables)
+		else :
+			#print("not a template string")
+			return str
+
+	def ensure_dir(self, path) :
+		"""
+			Looks for a folder at provided path, creates it if it does not exist.
+			Returns the folder.
+		"""
+		folder = os.path.exists(path)
+		if not folder:
+			if not self.testrun :
+				folder = os.makedirs(path)
+			self.logger("ensuring folder : %s " % path)
+		self.logger("folder ensured : %s " % path)
+		return folder
+
+	def ensure_file (self, path):
+		"""
+			Looks for  file at provided path, creates it if it does not exist.
+			Returns the file.
+		"""
+		file = os.path.exists(path) and os.path.isfile(path)
+		if not file :
+			# test for parent folder
+			if not os.path.exists(os.path.split(path)[0]) :
+				self.ensure_dir(os.path.split(path)[0])
+			if not self.testrun :
+				file = open(path,"w");
+			self.logger("ensuring file : %s " % path)
+
+		self.logger("file ensured : %s " % path)
+		return file
+
+	def popen_pipe(self, cmd) :
+		self.logger("PopenPipe: %s" % cmd)
+		result = ""
+		if not self.testrun :
+			result = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
+		return result
+
+	def popen(self, cmd, current_working_directory=None) :
+		self.logger("Popen : %s" % cmd)
+		if not self.testrun :
+			subprocess.Popen(cmd,cwd=current_working_directory)
+
+	def execute(self, args):
+		self.logger("Executing : %s" % args)
+		if not self.testrun :
+			os.system(args)
+
+	def dump_to_file (self,filepath, contents):
+		""" Function doc """
+		self.logger("Dumping contents to file : %s" % filepath)
+		self.ensure_file(filepath)
+		if not self.testrun :
+			_file = open(filepath,"w")
+			_file.write(contents)
+			_file.close()
+
+if __name__ == "__main__" :
+
+		parser = OptionParser()
+
+		parser.add_option("--test",
+			dest="isTestRun",
+			action="store_true",
+			default=False,
+			help="Dry Test Run.")
+
+		parser.add_option("--name",
+			dest="subdomain_name",
+			action="store",
+			help="name of the vhost subdomain")
+
+		parser.add_option("--email",
+			dest="admin_email",
+			action="store",
+			default="${USERNAME}@localhost",
+			help="email address of the site admin")
+
+		parser.add_option("--remove",
+			dest="remove",
+			action="store_true",
+			default=False,
+			help="remove this virtualhost")
+
+		parser.add_option("--django",
+			dest="isDjango",
+			action="store_true",
+			default=False,
+			help="virtualhost will be a django application")
+
+		parser.add_option("--ldap",
+			dest="isLdap",
+			action="store_true",
+			default=False,
+			help="Virtualhost will be a use and ldap server for authentication")
+		parser.add_option("--ldap-url",
+			dest="ldap_url",
+			action="store",
+			default="ldap://ldap.${HOSTNAME}.${AVAHI_DOMAIN}:389",
+			help="URI of the ldap authentication server")
+		parser.add_option("--ldap-admin",
+			dest="ldap_admin",
+			action="store",
+			default="cn=admin,dc=${HOSTNAME},dc=${AVAHI_DOMAIN}",
+			help="URI of the ldap authentication server")
+		parser.add_option("--ldap-admin-password",
+			dest="ldap_admin_password",
+			action="store",
+			default="password",
+			help="URI of the ldap authentication server")
+		parser.add_option("--ldap-base",
+			dest="ldap_base",
+			action="store",
+			default="ou=People,dc=${HOSTNAME},dc=${AVAHI_DOMAIN}",
+			help="Distinguished Name (DN) of the search base to look for Organisational Units")
+		parser.add_option("--ldap-allow-groups",
+			dest="ldap_allow_groups",
+			action="store",
+			default="",
+			help="semicolon separated Distinguished Name (DN) of the groups allowed to access this resource"),
+		parser.add_option("--ldap-allow-users",
+			dest="ldap_allow_users",
+			action="store",
+			default="",
+			help="semicolon separated UIDs of users allowed to access this resource")
+
+		parser.add_option("--django-ldap",
+			dest="djangoHandlesLDAP",
+			action="store_true",
+			default=False,
+			help="Ldap Authentication will be handled by the django backend instead of apache.")
+
+		(options,args) = parser.parse_args()
+
+		arg_error = False
+		if options.subdomain_name == None :
+			print("Need a subdomain name")
+			arg_error = True
+		elif options.admin_email == None :
+			if options.remove == False :
+				print("Need an email address")
+				arg_error = True
+
+		if arg_error == True :
+			parser.print_help()
+			exit(-1)
+		else :
+			vhost = vhostCreator(options)
+			if options.remove :
+				vhost.remove()
+			else:
+				vhost.create()
+

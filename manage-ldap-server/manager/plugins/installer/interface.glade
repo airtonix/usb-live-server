@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<interface>
+  <requires lib="gtk+" version="2.16"/>
+  <!-- interface-naming-policy project-wide -->
+  <object class="GtkWindow" id="window_main">
+    <child>
+      <object class="GtkVBox" id="vbox_applicationCanvas">
+        <property name="visible">True</property>
+        <child>
+          <object class="GtkHBox" id="hbox_appplicationHeader">
+            <property name="visible">True</property>
+            <child>
+              <object class="GtkImage" id="image_applicationLogo">
+                <property name="width_request">128</property>
+                <property name="height_request">128</property>
+                <property name="visible">True</property>
+                <property name="stock">gtk-missing-image</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkAlignment" id="alignment_applicationHeader">
+                <property name="visible">True</property>
+                <property name="xalign">0</property>
+                <property name="top_padding">2</property>
+                <property name="bottom_padding">2</property>
+                <property name="left_padding">5</property>
+                <property name="right_padding">2</property>
+                <child>
+                  <object class="GtkVBox" id="vbox_applicationHeader">
+                    <property name="visible">True</property>
+                    <child>
+                      <object class="GtkLabel" id="label_applicationHeader">
+                        <property name="visible">True</property>
+                        <property name="xalign">0</property>
+                        <property name="yalign">1</property>
+                        <property name="label" translatable="yes">Application Name</property>
+                        <attributes>
+                          <attribute name="scale" value="1.800000"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkHSeparator" id="hseparator_applicationHeader">
+                        <property name="visible">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="padding">2</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label_applicationSubHeader">
+                        <property name="visible">True</property>
+                        <property name="xalign">0</property>
+                        <property name="yalign">0</property>
+                        <property name="label" translatable="yes">Application Subtitle</property>
+                      </object>
+                      <packing>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+        <child>
+          <object class="GtkStatusbar" id="statusbar_statusbar">
+            <property name="visible">True</property>
+            <property name="spacing">2</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
