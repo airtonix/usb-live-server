@@ -230,13 +230,16 @@ class vhostCreator:
 				for group in self.process_template(args.ldap_allow_users).split(";") :
 					groups.append("Require ldap-group %s" % group)
 				self.variables["LDAP_REQUIRE_MODE"] = "\n".join(groups)
-			elif args.ldap_allow_users :
+
+			if args.ldap_allow_users :
 				users = []
 				for user in self.process_template(args.ldap_allow_users).split(";") :
 					groups.append("Require ldap-user %s" % user)
 				self.variables["LDAP_REQUIRE_MODE"] = "\n".join(groups)
-			else :
+
+			if not args.ldap_allow_users and not args.ldap_allow_groups :
 				self.variables["LDAP_REQUIRE_MODE"] = "Require valid-user"
+				
 		else:
 			self.variables["LDAP_REQUIRE_MODE"]=""
 
