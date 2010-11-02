@@ -71,15 +71,15 @@ COMPONENTS = {
 	],
 	"django" : [
 		["Create the Apache Python CGI", [
-			["<STORE>"									, ["DJANGO_WSCGI", """import os, sys\nsys.path.insert(0,'/var/www/${SUBDOMAIN_NAME}') \nos.environ['DJANGO_SETTINGS_MODULE'] = 'project.settings' \nimport django.core.handlers.wsgi \napplication = django.core.handlers.wsgi.WSGIHandler()"""]],
+			["<STORE>"									, ["DJANGO_WSGI", """import os, sys\nsys.path.insert(0,'/var/www/${SUBDOMAIN_NAME}') \nos.environ['DJANGO_SETTINGS_MODULE'] = 'project.settings' \nimport django.core.handlers.wsgi \napplication = django.core.handlers.wsgi.WSGIHandler()"""]],
 		]],
 
 		["Create the apache Config Element",[
 			["<STORE>"	, ["DJANGO_CONFIG","""
-WSGIScriptAlias / ${SITE_PATH_ROOT}cgi-bin/django.wsgi
-Alias /robots.txt ${SITE_PATH_ROOT}public_html/robots.txt
-Alias /favicon.ico ${SITE_PATH_ROOT}public_html/favicon.ico
-Alias /resources ${SITE_PATH_ROOT}public_html"""]]
+ WSGIScriptAlias / ${SITE_PATH_ROOT}cgi-bin/django.wsgi
+ Alias /robots.txt ${SITE_PATH_ROOT}public_html/robots.txt
+ Alias /favicon.ico ${SITE_PATH_ROOT}public_html/favicon.ico
+ Alias /resources ${SITE_PATH_ROOT}public_html"""]]
 		]],
 	],
 
@@ -100,15 +100,15 @@ Alias /resources ${SITE_PATH_ROOT}public_html"""]]
 			["mkdir"										, ["${SITE_PATH_ROOT}db","-p"]],
 			["mkdir"										, ["${SITE_PATH_ROOT}cgi-bin","-p"]],
 			["mkdir"										, ["${SITE_PATH_ROOT}cgi-bin","-p"]],
-			["touch"										, ["${SITE_PATH_ROOT}cgi-bin/django"]],
+			["touch"										, ["${SITE_PATH_ROOT}cgi-bin/django.wsgi"]],
 			["touch"										, ["${SITE_PATH_ROOT}logs/django.errors.log"]],
 			["touch"										, ["${SITE_PATH_ROOT}logs/django.debug.log"]],
 			["touch"										, ["${SITE_PATH_ROOT}logs/django.access.log"]],
-			["<FILEWRITE>"							, ["${DJANGO_WSCGI}", "${SITE_PATH_ROOT}cgi-bin/django.wsgi"]]
+			["<FILEWRITE>"							, ["${DJANGO_WSGI}", "${SITE_PATH_ROOT}cgi-bin/django.wsgi"]]
 		], "self.variables['isDjango'] == True"],
 		["Create the Sqlite Database", [
-			["touch"										, ["${SITE_PATH_ROOT}db/database.sql3"]],
-			["chmod"										, ["777","${SITE_PATH_ROOT}db/database.sql3"]],
+			["touch"										, ["${SITE_PATH_ROOT}db/database.sqlite3"]],
+			["chmod"										, ["777","${SITE_PATH_ROOT}db/database.sqlite3"]],
 		], "self.variables['isDjango'] == True"],
 		["Create the Django project", [
 			["<DJANGOADMIN>"							, ["startproject", "project"], "${SITE_PATH_ROOT}"],
@@ -229,16 +229,16 @@ class vhostCreator:
 				groups = []
 				for group in self.process_template(args.ldap_allow_users).split(";") :
 					groups.append("Require ldap-group %s" % group)
-				self.variables["LDAP_REQIRE_MODE"] = "\n".join(groups)
+				self.variables["LDAP_REQUIRE_MODE"] = "\n".join(groups)
 			elif args.ldap_allow_users :
 				users = []
 				for user in self.process_template(args.ldap_allow_users).split(";") :
 					groups.append("Require ldap-user %s" % user)
-				self.variables["LDAP_REQIRE_MODE"] = "\n".join(groups)
+				self.variables["LDAP_REQUIRE_MODE"] = "\n".join(groups)
 			else :
-				self.variables["LDAP_REQIRE_MODE"] = "Require valid-user"
+				self.variables["LDAP_REQUIRE_MODE"] = "Require valid-user"
 		else:
-			self.variables["LDAP_REQIRE_MODE"]=""
+			self.variables["LDAP_REQUIRE_MODE"]=""
 
 		print ( message(self.variables["APP_HEADER"],"header") )
 

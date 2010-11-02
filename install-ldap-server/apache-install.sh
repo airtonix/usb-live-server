@@ -27,6 +27,10 @@ case $pause in
 
 		message "Restart Apache Webserver" "header"
 		sudo service apache2 restart
+    
+		message "Restart Apache Webserver" "header"
+    sudo addgroup webdev-team
+    sudo adduser ubuntu webdev-team
 	;;
 	"n" )
 	;;
