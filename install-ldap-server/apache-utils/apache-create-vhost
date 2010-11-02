@@ -144,7 +144,7 @@ COMPONENTS = {
  AuthBasicProvider ldap
  AuthLDAPURL "ldap://localhost:389/${LDAP_BASE}?uid"
  AuthLDAPBindDN "cn=admin,dc=${HOSTNAME},dc=${AVAHI_DOMAIN}"
- AuthLDAPBindPassword "${LDAP_ADMIN_PASSWORD}d"
+ AuthLDAPBindPassword "${LDAP_ADMIN_PASSWORD}"
  AuthType basic
  AuthName "Please provide valid crednetials for : ${SUBDOMAIN_NAME}.${HOSTNAME}.${AVAHI_DOMAIN}"
  ${LDAP_REQUIRE_MODE}
